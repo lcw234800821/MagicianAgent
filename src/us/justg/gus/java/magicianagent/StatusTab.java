@@ -17,9 +17,10 @@
 
 package us.justg.gus.java.magicianagent;
 
-import com.sun.media.jfxmedia.events.MetadataListener;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -96,6 +97,20 @@ public class StatusTab extends JPanel {
         dropDownContainer.add(dropDown);
         statusButton = new JButton("Status");
         dropDownContainer.add(statusButton);
+        
+        // Adding event handlers.
+        // Holiday radio button
+        holidayRadioButton.addActionListener(new ActionListener() {
+            // Basically, what we do here is get the list of holidays and add
+            //      that list to the combobox for selection.
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                
+                // Enable the combo box.
+                dropDown.setEnabled(true);
+                
+            }
+        });
         
         
         //-BOTTOM HALF----------------------------------------------------------
@@ -186,8 +201,6 @@ public class StatusTab extends JPanel {
             // Call event.
             fireTableStructureChanged();
         }
-
-        
         
     }
     
