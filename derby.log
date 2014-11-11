@@ -12,3 +12,5 @@ os.arch=x86
 os.version=6.1
 derby.system.home=X:\My Documents\NetBeansProjects\MagicianAgent
 Database Class Loader started - derby.database.classpath=''
+----------------------------------------------------------------
+Mon Nov 10 22:03:51 EST 2014: Shutting down Derby engine
