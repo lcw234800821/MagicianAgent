@@ -17,13 +17,15 @@
 
 package us.justg.gus.java.magicianagent;
 
+import com.sun.media.jfxmedia.events.MetadataListener;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
-import java.beans.Statement;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Statement;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
@@ -113,7 +115,9 @@ public class StatusTab extends JPanel {
         
         private final Connection connection;
         private final Statement statement;
-        private final ResultSet resultSet;
+        private ResultSet resultSet;
+        private ResultSetMetaData metadata;
+        private boolean connected = false;
         
         private int rowCount;
         private int columnCount;
@@ -123,24 +127,64 @@ public class StatusTab extends JPanel {
             
             connection = DriverManager.getConnection(url, query, password);
             
-            //statement = connection.creates
+            statement = connection
+                    .createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
+                            ResultSet.CONCUR_READ_ONLY);
             
+            connected = true;
             
+            executeGivenQuery(query);
         }
         
         @Override
         public int getRowCount() {
-            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            return rowCount;
         }
 
         @Override
         public int getColumnCount() {
-            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            return columnCount;
         }
 
         @Override
-        public Object getValueAt(int rowIndex, int columnIndex) {
-            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        public Object getValueAt(int rowIndex, int columnIndex) 
+            throws IllegalStateException    {
+            if(!connected) throw new IllegalStateException("Not connected.");
+            
+            try {
+                // Get the specified object.
+                resultSet.absolute(rowIndex + 1);
+                return resultSet.getObject(columnIndex + 1);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+            
+            // If we catch an exception, return empty string.
+            return "";
+        }
+
+        private void executeGivenQuery(String query) 
+                throws SQLException, IllegalStateException {
+            
+            // Throw exception if we didn't connect.
+            if(!connected) throw new IllegalStateException("Not connected.");
+            
+            // Execute query.
+            resultSet = statement.executeQuery(query);
+            
+            // Get metadata.
+            metadata = resultSet.getMetaData();
+            
+            // Get number of rows.
+            resultSet.last();
+            rowCount = resultSet.getRow();
+            resultSet.beforeFirst();
+            
+            // Get number of columns.
+            columnCount = metadata.getColumnCount();
+            
+            // Call event.
+            fireTableStructureChanged();
         }
 
         
