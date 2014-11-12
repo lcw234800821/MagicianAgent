@@ -27,6 +27,7 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
@@ -53,7 +54,7 @@ public class StatusTab extends JPanel {
     JRadioButton holidayRadioButton;
     JRadioButton magicianRadioButton;
     JRadioButton waitlistRadioButton;
-    JPanel dropDownContainer;           // Right side
+    JPanel statusButtonContainer;           // Right side
     JComboBox<String> dropDown;
     JButton statusButton;
     
@@ -72,31 +73,32 @@ public class StatusTab extends JPanel {
         
         //-BUILDING TOP PORTION-------------------------------------------------
         top = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
-        // Radio buttons.
+        // Instantiate radio buttons.
         holidayRadioButton = new JRadioButton("Holiday");
         magicianRadioButton = new JRadioButton("Magician");
         waitlistRadioButton = new JRadioButton("Waitlist");
+        // Instantiate dropdown.
+        dropDown = new JComboBox();
+        //dropDown.setPrototypeDisplayValue("                          ");
         // Instantiate radio button container.
         radioButtonsContainer = new JPanel();
         BoxLayout bl = new BoxLayout(radioButtonsContainer, BoxLayout.LINE_AXIS);
         radioButtonsContainer.setLayout(bl);
         radioButtonsContainer.setBorder(BorderFactory.createTitledBorder("Status of"));
-        // Add radio buttons.
+        // Add radio buttons and dropdown.
         radioButtonsContainer.add(holidayRadioButton);
         radioButtonsContainer.add(magicianRadioButton);
         radioButtonsContainer.add(waitlistRadioButton);
+        radioButtonsContainer.add(dropDown);
         // Add the radio butttons into a group.
         radioButtonsGroup = new ButtonGroup();
         radioButtonsGroup.add(holidayRadioButton);
         radioButtonsGroup.add(magicianRadioButton);
         radioButtonsGroup.add(waitlistRadioButton);
-        // Instantiate right container and add in combo box and button
-        dropDownContainer = new JPanel(new FlowLayout());
-        dropDown = new JComboBox();
-        dropDown.setPrototypeDisplayValue("This is a sample");
-        dropDownContainer.add(dropDown);
+        // Instantiate right container and add in button
         statusButton = new JButton("Status");
-        dropDownContainer.add(statusButton);
+        statusButtonContainer = new JPanel(new FlowLayout());
+        statusButtonContainer.add(statusButton);
         
         // Adding event handlers.
         // Holiday radio button
@@ -109,6 +111,20 @@ public class StatusTab extends JPanel {
                 // Enable the combo box.
                 dropDown.setEnabled(true);
                 
+                // Populate the combo box.
+                dropDown.removeAllItems();
+                HolidayTableConnector connector = new HolidayTableConnector();
+                ArrayList<Holiday> holidays = (ArrayList<Holiday>) connector.getAllHolidays();
+                for (Holiday h : holidays) dropDown.addItem(h.toString());
+                
+            }
+        });
+        // Magician radio button
+        magicianRadioButton.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
             }
         });
         
@@ -120,7 +136,7 @@ public class StatusTab extends JPanel {
 
         // Adding in the two halves.
         top.add(radioButtonsContainer);
-        top.add(dropDownContainer);
+        top.add(statusButtonContainer);
         
         add(top, BorderLayout.NORTH);
         add(tableScrollPane, BorderLayout.CENTER);

@@ -17,10 +17,59 @@
 
 package us.justg.gus.java.magicianagent;
 
+import com.sun.corba.se.impl.logging.ORBUtilSystemException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+
 /**
  *
  * @author hfs5022
  */
-public class HolidayTableConnector {
+public class HolidayTableConnector extends MagicianAgentConnector {
     
+    PreparedStatement getAllHolidays;
+    
+    public HolidayTableConnector() {
+        super();
+        
+        try {
+            
+            Connection connection = getConnection();
+            
+            // Instantiate prepared statements.
+            getAllHolidays = connection.prepareStatement(
+                    "SELECT name "
+                            + "FROM holiday"
+                            /*+ "ORDER BY name ASC"*/
+            );
+            
+            
+            
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        
+    }
+    
+    public List<Holiday> getAllHolidays() {
+        
+        List<Holiday> results = null;
+        
+        try (ResultSet resultSet = getAllHolidays.executeQuery()) {
+            
+            results = new ArrayList<>();
+            
+            while(resultSet.next()) results.add(new Holiday(resultSet.getString("name")));
+            
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } 
+        
+        return results;
+    }
 }
