@@ -23,11 +23,13 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
@@ -124,8 +126,85 @@ public class StatusTab extends JPanel {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+
+                // Enable the combo box.
+                dropDown.setEnabled(true);
+                
+                // Populate the combo box.
+                dropDown.removeAllItems();
+                MagicianTableConnector connector = new MagicianTableConnector();
+                ArrayList<Magician> magicians = (ArrayList<Magician>) connector.getAllMagicians();
+                for (Magician m : magicians) dropDown.addItem(m.toString());            }
+        });
+        // Waitlist radio button
+        waitlistRadioButton.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                dropDown.removeAllItems();
+                dropDown.setEnabled(false);
             }
+        });
+        // Status button
+        statusButton.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                
+                // Return if nothing selected (and we're not looking for 
+                //      the waiting list...
+                if (!waitlistRadioButton.isSelected() 
+                        && dropDown.getSelectedItem() == null) return; 
+                
+                if (waitlistRadioButton.isSelected()) {
+                }
+                
+                //
+                // NOTE: YOU COULD PROBABLY MAKE A NICE FUNCTION FOR THE NEXT
+                //      TWO ELSE-IFs 
+                //
+                else if (magicianRadioButton.isSelected()) {
+                    
+                    String query = "SELECT timestamp, magician, holiday, customer "
+                            + "FROM bookings "
+                            + "WHERE magician = ?";                           
+                    
+                    // Our arguments.
+                    List<String> args = new ArrayList<>();
+                    args.add((String)dropDown.getSelectedItem());
+                    
+                    try {
+                        table.setModel(new StatusTableModel(MagicianAgentConnector.URL,
+                                MagicianAgentConnector.USERNAME,
+                                MagicianAgentConnector.PASSWORD,
+                                query, args));
+                    } catch (SQLException exception) {
+                        exception.printStackTrace();
+                    }
+                }
+                
+                else if (holidayRadioButton.isSelected()) {
+                    
+                    String query = "SELECT timestamp, magician, holiday, customer "
+                            + "FROM bookings "
+                            + "WHERE holiday = ?";                           
+                    
+                    // Our arguments.
+                    List<String> args = new ArrayList<>();
+                    args.add((String)dropDown.getSelectedItem());
+                    
+                    try {
+                        table.setModel(new StatusTableModel(MagicianAgentConnector.URL,
+                                MagicianAgentConnector.USERNAME,
+                                MagicianAgentConnector.PASSWORD,
+                                query, args));
+                    } catch (SQLException exception) {
+                        exception.printStackTrace();
+                    }
+                }
+            }
+                    
+           
         });
         
         
@@ -145,7 +224,7 @@ public class StatusTab extends JPanel {
     class StatusTableModel extends AbstractTableModel { 
         
         private final Connection connection;
-        private final Statement statement;
+        private PreparedStatement preparedStatement;
         private ResultSet resultSet;
         private ResultSetMetaData metadata;
         private boolean connected = false;
@@ -154,17 +233,13 @@ public class StatusTab extends JPanel {
         private int columnCount;
 
         public StatusTableModel(String url, String username,
-                String password, String query) throws SQLException {
+                String password, String query, List<String> args) throws SQLException {
             
-            connection = DriverManager.getConnection(url, query, password);
-            
-            statement = connection
-                    .createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
-                            ResultSet.CONCUR_READ_ONLY);
+            connection = DriverManager.getConnection(url, username, password);
             
             connected = true;
             
-            executeGivenQuery(query);
+            executeGivenQuery(query, args);
         }
         
         @Override
@@ -194,14 +269,26 @@ public class StatusTab extends JPanel {
             return "";
         }
 
-        private void executeGivenQuery(String query) 
+        private void executeGivenQuery(String query, List<String> args) 
                 throws SQLException, IllegalStateException {
             
             // Throw exception if we didn't connect.
             if(!connected) throw new IllegalStateException("Not connected.");
             
+            // Prepare our statement.
+            preparedStatement = connection.prepareStatement(query, 
+                    ResultSet.TYPE_SCROLL_INSENSITIVE, 
+                    ResultSet.CONCUR_READ_ONLY);
+            
+            // Set arguments.
+            for (int i = 1; i < args.size() + 1; i++) {
+                preparedStatement.setString(i, args.get(i-1));
+            }
+            
+            
+            
             // Execute query.
-            resultSet = statement.executeQuery(query);
+            resultSet = preparedStatement.executeQuery();
             
             // Get metadata.
             metadata = resultSet.getMetaData();
