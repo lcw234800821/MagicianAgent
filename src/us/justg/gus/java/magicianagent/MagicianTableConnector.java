@@ -33,6 +33,7 @@ import java.util.List;
 public class MagicianTableConnector extends MagicianAgentConnector {
     
     PreparedStatement getAllMagicians;
+    PreparedStatement getFreeMagicians;
     
     public MagicianTableConnector() {
         super();
@@ -46,6 +47,17 @@ public class MagicianTableConnector extends MagicianAgentConnector {
                     "SELECT name "
                             + "FROM magician"
                             /*+ "ORDER BY name ASC"*/
+            );
+            getFreeMagicians = connection.prepareStatement(
+                    "SELECT name "
+                            + "FROM magician "
+                            /*+ "ORDER BY name ASC"*/
+                            + "WHERE "
+                            + "name NOT IN "
+                            + "(SELECT magician "
+                            + "FROM bookings "
+                            + "WHERE holiday = ? "
+                            + "AND name <> ?)"
             );
             
             
@@ -73,4 +85,28 @@ public class MagicianTableConnector extends MagicianAgentConnector {
         return results;
     }
             
+    public List<Magician> getFreeMagicians(String holiday, String name) {
+        
+        List<Magician> results = null;
+        
+        try {
+            getFreeMagicians.setString(1, holiday);
+            getFreeMagicians.setString(2, name);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        
+        try (ResultSet resultSet = getFreeMagicians.executeQuery()) {
+            
+            results = new ArrayList<>();
+            
+            while(resultSet.next()) results.add(new Magician(resultSet.getString("name")));
+            
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } 
+        
+        return results;
+        
+    }
 }

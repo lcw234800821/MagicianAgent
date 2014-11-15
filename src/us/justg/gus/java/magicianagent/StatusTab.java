@@ -117,6 +117,7 @@ public class StatusTab extends JPanel {
                 dropDown.removeAllItems();
                 HolidayTableConnector connector = new HolidayTableConnector();
                 ArrayList<Holiday> holidays = (ArrayList<Holiday>) connector.getAllHolidays();
+                connector.close();
                 for (Holiday h : holidays) dropDown.addItem(h.toString());
                 
             }
@@ -134,7 +135,9 @@ public class StatusTab extends JPanel {
                 dropDown.removeAllItems();
                 MagicianTableConnector connector = new MagicianTableConnector();
                 ArrayList<Magician> magicians = (ArrayList<Magician>) connector.getAllMagicians();
-                for (Magician m : magicians) dropDown.addItem(m.toString());            }
+                connector.close();
+                for (Magician m : magicians) dropDown.addItem(m.toString());            
+            }
         });
         // Waitlist radio button
         waitlistRadioButton.addActionListener(new ActionListener() {
