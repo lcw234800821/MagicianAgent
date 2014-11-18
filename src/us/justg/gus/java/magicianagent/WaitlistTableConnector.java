@@ -35,6 +35,7 @@ import java.util.List;
 public class WaitlistTableConnector extends MagicianAgentConnector {
     
     PreparedStatement addToWaitlist;
+    PreparedStatement checkIfOnWaitlist;
     
     public WaitlistTableConnector() {
         super();
@@ -50,7 +51,13 @@ public class WaitlistTableConnector extends MagicianAgentConnector {
                             + "VALUES "
                             + "(?,?,?)"
             );
-            
+            checkIfOnWaitlist = connection.prepareStatement(
+                    "SELECT * FROM waitlist "
+                            + "WHERE "
+                            + "customer = ? "
+                            + "AND "
+                            + "holiday = ? "
+            );
             
             
         } catch (SQLException e) {
@@ -79,5 +86,29 @@ public class WaitlistTableConnector extends MagicianAgentConnector {
             return false;
         } 
         
+    }
+    
+    public boolean checkIfOnWaitlist(String customer, String holiday) {
+        try {
+            
+            checkIfOnWaitlist.setString(1, customer);
+            checkIfOnWaitlist.setString(2, holiday);
+            
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return true;
+        }
+        
+        try(ResultSet results = checkIfOnWaitlist.executeQuery()) {
+            
+            // If there's no results, we return false.
+            if(results.next()) return true;
+            else return false;
+
+            
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return true;
+        } 
     }
 }

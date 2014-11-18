@@ -17,7 +17,6 @@
 
 package us.justg.gus.java.magicianagent;
 
-import com.sun.corba.se.impl.logging.ORBUtilSystemException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;

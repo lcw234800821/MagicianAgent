@@ -45,13 +45,14 @@ public class MagicianAgentGUI extends JFrame {
         setLocationRelativeTo(null);                    // Center window
         
         jTabbedPane = new JTabbedPane();
-        jTabbedPane.addTab("Status", null, new StatusTab(), "Check the status of a holiday or magician");
         jTabbedPane.addTab("Book", null, new BookTab(), "Book a magician");
+        jTabbedPane.addTab("Status", null, new StatusTab(), "Check the status of a holiday or magician");
         
         
         
         // Finally, add components and set visible.
         add(jTabbedPane);
         setVisible(true);
+        setResizable(false);
     }
 }

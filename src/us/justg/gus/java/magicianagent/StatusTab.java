@@ -18,6 +18,7 @@
 package us.justg.gus.java.magicianagent;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -160,6 +161,20 @@ public class StatusTab extends JPanel {
                         && dropDown.getSelectedItem() == null) return; 
                 
                 if (waitlistRadioButton.isSelected()) {
+                    
+                    String query = "SELECT * FROM waitlist";
+                    
+                    List<String> args = new ArrayList<>();
+                    
+                    try {
+                        table.setModel(new StatusTableModel(MagicianAgentConnector.URL,
+                                MagicianAgentConnector.USERNAME,
+                                MagicianAgentConnector.PASSWORD,
+                                query, args));
+                    } catch (SQLException exception) {
+                        exception.printStackTrace();
+                    }
+                    
                 }
                 
                 //
@@ -168,7 +183,7 @@ public class StatusTab extends JPanel {
                 //
                 else if (magicianRadioButton.isSelected()) {
                     
-                    String query = "SELECT timestamp, magician, holiday, customer "
+                    String query = "SELECT timestamp, holiday, customer "
                             + "FROM bookings "
                             + "WHERE magician = ?";                           
                     
@@ -188,7 +203,7 @@ public class StatusTab extends JPanel {
                 
                 else if (holidayRadioButton.isSelected()) {
                     
-                    String query = "SELECT timestamp, magician, holiday, customer "
+                    String query = "SELECT timestamp, magician, customer "
                             + "FROM bookings "
                             + "WHERE holiday = ?";                           
                     
@@ -205,6 +220,10 @@ public class StatusTab extends JPanel {
                         exception.printStackTrace();
                     }
                 }
+                
+                
+                // Set the size of the table.
+                refreshTableSize();
             }
                     
            
@@ -223,6 +242,14 @@ public class StatusTab extends JPanel {
         add(top, BorderLayout.NORTH);
         add(tableScrollPane, BorderLayout.CENTER);
     }
+    
+    
+    private void refreshTableSize() {
+        Dimension tableSize = new Dimension(getSize().width, tableScrollPane.getSize().height);
+        tableScrollPane.setPreferredSize(tableSize);
+        validate();
+    }
+        
     
     class StatusTableModel extends AbstractTableModel { 
         
@@ -272,6 +299,25 @@ public class StatusTab extends JPanel {
             return "";
         }
 
+        @Override
+        public String getColumnName(int i) {
+            try {
+                char[] columnName = metadata.getColumnName(i+1)
+                        .toLowerCase()
+                        .toCharArray();
+                String firstLetter = columnName[0] + "";
+                columnName[0] = firstLetter.toUpperCase().toCharArray()[0];
+                
+                return new String(columnName);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+            
+            return super.getColumnName(i);
+        }
+        
+        
+
         private void executeGivenQuery(String query, List<String> args) 
                 throws SQLException, IllegalStateException {
             
@@ -307,6 +353,7 @@ public class StatusTab extends JPanel {
             // Call event.
             fireTableStructureChanged();
         }
+        
         
     }
     

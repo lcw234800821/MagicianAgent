@@ -17,15 +17,12 @@
 
 package us.justg.gus.java.magicianagent;
 
-import com.sun.corba.se.impl.logging.ORBUtilSystemException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.List;
 
 
 /**
@@ -35,6 +32,7 @@ import java.util.List;
 public class BookingsTableConnector extends MagicianAgentConnector {
     
     PreparedStatement addToBookings;
+    PreparedStatement checkIfBooked;
     
     public BookingsTableConnector() {
         super();
@@ -49,6 +47,13 @@ public class BookingsTableConnector extends MagicianAgentConnector {
                             + "(timestamp, customer, holiday, magician) "
                             + "VALUES "
                             + "(?,?,?,?)"
+            );
+            checkIfBooked = connection.prepareStatement(
+                    "SELECT * FROM bookings "
+                            + "WHERE "
+                            + "customer = ? "
+                            + "AND "
+                            + "holiday = ? "
             );
             
             
@@ -80,5 +85,29 @@ public class BookingsTableConnector extends MagicianAgentConnector {
             return false;
         } 
         
+    }
+    
+    public boolean checkIfBooked(String customer, String holiday) {
+        try {
+            
+            checkIfBooked.setString(1, customer);
+            checkIfBooked.setString(2, holiday);
+            
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return true;
+        }
+        
+        try(ResultSet results = checkIfBooked.executeQuery()) {
+                        
+            // If there's no results, we return false.
+            if(results.next()) return true;
+            else return false;
+
+            
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return true;
+        } 
     }
 }

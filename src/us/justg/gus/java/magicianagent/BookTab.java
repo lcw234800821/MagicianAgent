@@ -17,6 +17,7 @@
 
 package us.justg.gus.java.magicianagent;
 
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type;
 import java.awt.AWTEventMulticaster;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
@@ -30,6 +31,7 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
@@ -54,6 +56,7 @@ public class BookTab extends JPanel {
     
     JPanel bottomContainer;
     
+    JScrollPane consoleScrollPane;
     BookTabConsole console;
     
     
@@ -89,8 +92,9 @@ public class BookTab extends JPanel {
         bottomContainer.setBorder(BorderFactory.createTitledBorder("Console"));
         
         console = new BookTabConsole();
+        consoleScrollPane = new JScrollPane(console);
         
-        bottomContainer.add(console,BorderLayout.CENTER);
+        bottomContainer.add(consoleScrollPane,BorderLayout.CENTER);
         
         add(topContainer,BorderLayout.NORTH);
         add(bottomContainer,BorderLayout.CENTER);
@@ -102,6 +106,13 @@ public class BookTab extends JPanel {
         @Override
         public void actionPerformed(ActionEvent e) {
             
+            // We need to connect to all of the tables at different points.
+            BookingsTableConnector bookings = new BookingsTableConnector();
+            MagicianTableConnector magicianTableConnector = 
+                    new MagicianTableConnector();
+            CustomerTableConnector connector = new CustomerTableConnector();
+            WaitlistTableConnector waitlist = new WaitlistTableConnector();
+            
             String customer = textbox.getText();
             String holiday = holidayDropdown.getSelectedItem().toString();
             List<Magician> freeMagicians; 
@@ -110,17 +121,38 @@ public class BookTab extends JPanel {
             if(textbox.getText() == null) return;
             if(holidayDropdown.getSelectedItem() == null) return;
             
-            CustomerTableConnector connector = new CustomerTableConnector();
+            
             
             // Add the customer to the database
             if(connector.addCustomer(textbox.getText())) {
                 console.info("New customer " + textbox.getText() + " added to database.");
             } else {
-                
+                console.info(
+                        String.format("Customer %s already in database, no need to add.", 
+                                textbox.getText())
+                );
             }
             
-            MagicianTableConnector magicianTableConnector = 
-                    new MagicianTableConnector();
+            // Check if they already booked that holiday.
+            if(bookings.checkIfBooked(customer, holiday)) {
+                console.error(
+                        String.format(
+                                "Customer %s has already booked a magician for %s!",
+                                customer, holiday)
+                );
+                return;
+            }
+            
+            // Check if they are on the waitlist.
+            if(waitlist.checkIfOnWaitlist(customer, holiday)) {
+                console.error(
+                        String.format(
+                                "Customer %s is already on the waitlist for %s!",
+                                customer, holiday)
+                );
+                return;
+            }
+            
             
             freeMagicians = 
                     magicianTableConnector
@@ -132,21 +164,35 @@ public class BookTab extends JPanel {
             // No free magicians; add to waitlist.
             if(freeMagicians.size() < 1) {
                 
-                WaitlistTableConnector waitlist = new WaitlistTableConnector();
+                
                 
                 waitlist.addToWaitlist(
                         customer,holiday
+                );
+                
+                console.info(
+                        String.format(
+                                "Put customer %s on the waitlist for holiday %s.", 
+                                customer,holiday
+                        )
                 );
             }
             // Else, book them.
             else {
                 
-                BookingsTableConnector bookings = new BookingsTableConnector();
+                
                 
                 bookings.addToBookings(
                         customer,
                         holiday,
                         freeMagicians.get(0).toString()
+                );
+                
+                console.info(
+                        String.format(
+                                "Booked customer %s with magician %s for holiday %s.", 
+                                customer, freeMagicians.get(0).toString(), holiday
+                        )
                 );
                 
             }
@@ -174,6 +220,16 @@ public class BookTab extends JPanel {
             writeLine(
                     String.format(
                             "[ERROR]\t%s", error
+                    )
+            );
+            
+        }
+        
+        public void warning(String warning){
+            
+            writeLine(
+                    String.format(
+                            "[WARN]\t%s", warning
                     )
             );
             
