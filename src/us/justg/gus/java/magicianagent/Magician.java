@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 package us.justg.gus.java.magicianagent;
 
 /**
@@ -22,7 +21,7 @@ package us.justg.gus.java.magicianagent;
  * @author hfs5022
  */
 public class Magician {
-    
+
     private final String name;
 
     public Magician(String name) {
@@ -33,5 +32,5 @@ public class Magician {
     public String toString() {
         return name;
     }
-    
+
 }

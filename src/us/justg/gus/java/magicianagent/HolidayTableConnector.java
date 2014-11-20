@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 package us.justg.gus.java.magicianagent;
 
 import java.sql.Connection;
@@ -24,51 +23,50 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-
 /**
  *
  * @author hfs5022
  */
 public class HolidayTableConnector extends MagicianAgentConnector {
-    
+
     PreparedStatement getAllHolidays;
-    
+
     public HolidayTableConnector() {
         super();
-        
+
         try {
-            
+
             Connection connection = getConnection();
-            
+
             // Instantiate prepared statements.
             getAllHolidays = connection.prepareStatement(
                     "SELECT name "
-                            + "FROM holiday"
-                            /*+ "ORDER BY name ASC"*/
+                    + "FROM holiday"
+            /*+ "ORDER BY name ASC"*/
             );
-            
-            
-            
+
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        
+
     }
-    
+
     public List<Holiday> getAllHolidays() {
-        
+
         List<Holiday> results = null;
-        
+
         try (ResultSet resultSet = getAllHolidays.executeQuery()) {
-            
+
             results = new ArrayList<>();
-            
-            while(resultSet.next()) results.add(new Holiday(resultSet.getString("name")));
-            
+
+            while (resultSet.next()) {
+                results.add(new Holiday(resultSet.getString("name")));
+            }
+
         } catch (SQLException e) {
             e.printStackTrace();
-        } 
-        
+        }
+
         return results;
     }
 }

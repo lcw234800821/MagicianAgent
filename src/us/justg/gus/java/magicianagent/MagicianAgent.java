@@ -3,7 +3,6 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-
 package us.justg.gus.java.magicianagent;
 
 /**
@@ -18,5 +17,5 @@ public class MagicianAgent {
     public static void main(String[] args) {
         new MagicianAgentGUI();
     }
-    
+
 }

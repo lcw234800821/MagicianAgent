@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 package us.justg.gus.java.magicianagent;
 
 import java.sql.Connection;
@@ -26,12 +25,12 @@ import java.sql.SQLException;
  * @author hfs5022
  */
 public class MagicianAgentConnector {
-    
+
     public static final String URL = "jdbc:derby://localhost:1527/magician_agent";
     public static final String USERNAME = "gus";
     public static final String PASSWORD = "gus";
     private Connection connection;
-    
+
     public MagicianAgentConnector() {
         try {
             connection = DriverManager.getConnection(URL, USERNAME, PASSWORD);
@@ -39,7 +38,7 @@ public class MagicianAgentConnector {
             e.printStackTrace();
         }
     }
-    
+
     public void close() {
         try {
             connection.close();
@@ -51,6 +50,5 @@ public class MagicianAgentConnector {
     public Connection getConnection() {
         return connection;
     }
-    
-    
+
 }

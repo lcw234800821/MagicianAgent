@@ -1,16 +1,14 @@
-Mon Nov 10 21:13:47 EST 2014 : Apache Derby Network Server - 10.8.3.2 - (1557835) started and ready to accept connections on port 1527
+Thu Nov 20 16:49:20 EST 2014 : Apache Derby Network Server - 10.10.1.3 - (1557168) started and ready to accept connections on port 1527
 ----------------------------------------------------------------
-Mon Nov 10 21:13:48 EST 2014:
-Booting Derby version The Apache Software Foundation - Apache Derby - 10.8.3.2 - (1557835): instance a816c00e-0149-9ca0-db19-ffffe492e57e 
-on database directory X:\My Documents\NetBeansProjects\MagicianAgent\magician_agent  with class loader sun.misc.Launcher$AppClassLoader@e48e1b 
-Loaded from file:/C:/Program%20Files%20(x86)/Java/jdk1.7.0_65/db/lib/derby.jar
+Thu Nov 20 16:49:20 EST 2014:
+Booting Derby version The Apache Software Foundation - Apache Derby - 10.10.1.3 - (1557168): instance a816c00e-0149-cf2e-545d-ffff93e343c9 
+on database directory C:\Users\hfs5022\Documents\NetBeansProjects\MagicianAgent\magician_agent with class loader sun.misc.Launcher$AppClassLoader@1d44bcfa 
+Loaded from file:/C:/Program%20Files/Java/jdk1.8.0_11/db/lib/derby.jar
 java.vendor=Oracle Corporation
-java.runtime.version=1.7.0_65-b19
-user.dir=C:\Program Files (x86)\Java\jdk1.7.0_65\db
+java.runtime.version=1.8.0_11-b12
+user.dir=C:\Program Files\Java\jdk1.8.0_11\db
 os.name=Windows 7
-os.arch=x86
+os.arch=amd64
 os.version=6.1
-derby.system.home=X:\My Documents\NetBeansProjects\MagicianAgent
+derby.system.home=C:\Users\hfs5022\Documents\NetBeansProjects\MagicianAgent
 Database Class Loader started - derby.database.classpath=''
-----------------------------------------------------------------
-Mon Nov 10 22:03:51 EST 2014: Shutting down Derby engine
