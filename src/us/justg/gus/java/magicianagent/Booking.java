@@ -14,24 +14,42 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 package us.justg.gus.java.magicianagent;
+
+import java.sql.Timestamp;
 
 /**
  *
  * @author hfs5022
  */
-public class Holiday {
-    
-    private final String name;
+public class Booking {
 
-    public Holiday(String name) {
-        this.name = name;
+    private final Timestamp timestamp;
+    private final Holiday holiday;
+    private final Customer customer;
+    private final Magician magician;
+
+    public Booking(Timestamp timestamp, Holiday holiday, Customer customer, Magician magician) {
+        this.timestamp = timestamp;
+        this.holiday = holiday;
+        this.customer = customer;
+        this.magician = magician;
     }
-    
-    @Override
-    public String toString() {
-        return name;
+
+    public Timestamp getTimestamp() {
+        return timestamp;
     }
-    
+
+    public Holiday getHoliday() {
+        return holiday;
+    }
+
+    public Customer getCustomer() {
+        return customer;
+    }
+
+    public Magician getMagician() {
+        return magician;
+    }
+
 }

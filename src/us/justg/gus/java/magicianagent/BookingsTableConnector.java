@@ -60,6 +60,12 @@ public class BookingsTableConnector extends MagicianAgentConnector {
 
     }
 
+    /**
+     * @deprecated @param customer
+     * @param holiday
+     * @param magician
+     * @throws SQLException
+     */
     public void addToBookings(String customer, String holiday, String magician)
             throws SQLException {
 
@@ -69,6 +75,18 @@ public class BookingsTableConnector extends MagicianAgentConnector {
         addToBookings.setString(2, customer);
         addToBookings.setString(3, holiday);
         addToBookings.setString(4, magician);
+
+        addToBookings.executeUpdate();
+
+    }
+
+    public void addToBookings(Booking booking)
+            throws SQLException {
+
+        addToBookings.setTimestamp(1, booking.getTimestamp());
+        addToBookings.setString(2, booking.getCustomer().toString());
+        addToBookings.setString(3, booking.getHoliday().toString());
+        addToBookings.setString(4, booking.getMagician().toString());
 
         addToBookings.executeUpdate();
 
@@ -88,11 +106,7 @@ public class BookingsTableConnector extends MagicianAgentConnector {
         try (ResultSet results = checkIfBooked.executeQuery()) {
 
             // If there's no results, we return false.
-            if (results.next()) {
-                return true;
-            } else {
-                return false;
-            }
+            return results.next();
 
         } catch (SQLException e) {
             e.printStackTrace();

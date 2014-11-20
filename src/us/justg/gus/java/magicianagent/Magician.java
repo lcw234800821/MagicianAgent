@@ -21,9 +21,9 @@ package us.justg.gus.java.magicianagent;
  *
  * @author hfs5022
  */
-class Magician {
+public class Magician {
     
-    String name;
+    private final String name;
 
     public Magician(String name) {
         this.name = name;

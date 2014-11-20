@@ -17,15 +17,12 @@
 
 package us.justg.gus.java.magicianagent;
 
-import com.sun.corba.se.impl.logging.ORBUtilSystemException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.List;
 
 
 /**
@@ -66,6 +63,12 @@ public class WaitlistTableConnector extends MagicianAgentConnector {
         
     }
     
+    /**
+     * @deprecated 
+     * @param customer
+     * @param holiday
+     * @throws SQLException 
+     */
     public void addToWaitlist(String customer, String holiday)
             throws SQLException {
 
@@ -74,6 +77,17 @@ public class WaitlistTableConnector extends MagicianAgentConnector {
         );
         addToWaitlist.setString(2, customer);
         addToWaitlist.setString(3, holiday);
+
+        addToWaitlist.executeUpdate();
+
+    }
+    
+    public void addToWaitlist(WaitlistItem waitlistItem)
+            throws SQLException {
+
+        addToWaitlist.setTimestamp(1, waitlistItem.getTimestamp());
+        addToWaitlist.setString(2, waitlistItem.getCustomer().toString());
+        addToWaitlist.setString(3, waitlistItem.getHoliday().toString());
 
         addToWaitlist.executeUpdate();
 
@@ -93,8 +107,7 @@ public class WaitlistTableConnector extends MagicianAgentConnector {
         try(ResultSet results = checkIfOnWaitlist.executeQuery()) {
             
             // If there's no results, we return false.
-            if(results.next()) return true;
-            else return false;
+            return results.next();
 
             
         } catch (SQLException e) {

@@ -14,55 +14,65 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 package us.justg.gus.java.magicianagent;
 
-import com.sun.corba.se.impl.logging.ORBUtilSystemException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.SQLIntegrityConstraintViolationException;
-import java.util.ArrayList;
-import java.util.List;
-
 
 /**
  *
  * @author hfs5022
  */
 public class CustomerTableConnector extends MagicianAgentConnector {
-        
+
     PreparedStatement addCustomer;
-    
+
     public CustomerTableConnector() {
         super();
-        
+
         try {
-            
+
             Connection connection = getConnection();
-            
+
             // Instantiate prepared statements.
             addCustomer = connection.prepareStatement(
                     "INSERT INTO customer VALUES ?"
             );
-            
-            
-            
+
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        
+
     }
     
+    /**
+     * @deprecated 
+     * @param name
+     * @return 
+     */
     public boolean addCustomer(String name) {
-        
+
         try {
-            
+
             addCustomer.setString(1, name);
             addCustomer.executeUpdate();
             return true;
-            
+
+        } catch (SQLException e) {
+            //e.printStackTrace();
+            return false;
+        }
+    }
+    
+    public boolean addCustomer(Customer customer) {
+
+        try {
+
+            addCustomer.setString(1, customer.toString());
+            addCustomer.executeUpdate();
+            return true;
+
         } catch (SQLException e) {
             //e.printStackTrace();
             return false;

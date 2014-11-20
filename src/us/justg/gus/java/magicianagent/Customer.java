@@ -14,24 +14,23 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 package us.justg.gus.java.magicianagent;
 
 /**
  *
  * @author hfs5022
  */
-public class Holiday {
-    
+public class Customer {
+
     private final String name;
 
-    public Holiday(String name) {
+    public Customer(String name) {
         this.name = name;
     }
-    
+
     @Override
     public String toString() {
         return name;
     }
-    
+
 }

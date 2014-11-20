@@ -17,21 +17,34 @@
 
 package us.justg.gus.java.magicianagent;
 
+import java.sql.Timestamp;
+
 /**
  *
  * @author hfs5022
  */
-public class Holiday {
+public class WaitlistItem {
     
-    private final String name;
+    private final Timestamp timestamp;
+    private final Holiday holiday;
+    private final Customer customer;
 
-    public Holiday(String name) {
-        this.name = name;
+    public WaitlistItem(Timestamp timestamp, Holiday holiday, Customer customer) {
+        this.timestamp = timestamp;
+        this.holiday = holiday;
+        this.customer = customer;
     }
-    
-    @Override
-    public String toString() {
-        return name;
+
+    public Timestamp getTimestamp() {
+        return timestamp;
+    }
+
+    public Holiday getHoliday() {
+        return holiday;
+    }
+
+    public Customer getCustomer() {
+        return customer;
     }
     
 }
