@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 package us.justg.gus.java.magicianagent;
 
 import java.sql.Connection;
@@ -24,90 +23,80 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.Calendar;
 
-
 /**
  *
  * @author hfs5022
  */
 public class BookingsTableConnector extends MagicianAgentConnector {
-    
+
     PreparedStatement addToBookings;
     PreparedStatement checkIfBooked;
-    
+
     public BookingsTableConnector() {
         super();
-        
+
         try {
-            
+
             Connection connection = getConnection();
-            
+
             // Instantiate prepared statements.
             addToBookings = connection.prepareStatement(
                     "INSERT INTO bookings "
-                            + "(timestamp, customer, holiday, magician) "
-                            + "VALUES "
-                            + "(?,?,?,?)"
+                    + "(timestamp, customer, holiday, magician) "
+                    + "VALUES "
+                    + "(?,?,?,?)"
             );
             checkIfBooked = connection.prepareStatement(
                     "SELECT * FROM bookings "
-                            + "WHERE "
-                            + "customer = ? "
-                            + "AND "
-                            + "holiday = ? "
+                    + "WHERE "
+                    + "customer = ? "
+                    + "AND "
+                    + "holiday = ? "
             );
-            
-            
-            
+
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        
-    }
-    
-    public boolean addToBookings(String customer, String holiday, String magician) {
-                
-        try {
-            
-            addToBookings.setTimestamp(1, 
-                    new Timestamp(Calendar.getInstance().getTime().getTime())
-            );
-            addToBookings.setString(2, customer);
-            addToBookings.setString(3, holiday);
-            addToBookings.setString(4, magician);
-            
-            addToBookings.executeUpdate();
-            
-            return true;
 
-            
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        } 
-        
     }
-    
+
+    public void addToBookings(String customer, String holiday, String magician)
+            throws SQLException {
+
+        addToBookings.setTimestamp(1,
+                new Timestamp(Calendar.getInstance().getTime().getTime())
+        );
+        addToBookings.setString(2, customer);
+        addToBookings.setString(3, holiday);
+        addToBookings.setString(4, magician);
+
+        addToBookings.executeUpdate();
+
+    }
+
     public boolean checkIfBooked(String customer, String holiday) {
         try {
-            
+
             checkIfBooked.setString(1, customer);
             checkIfBooked.setString(2, holiday);
-            
+
         } catch (SQLException e) {
             e.printStackTrace();
             return true;
         }
-        
-        try(ResultSet results = checkIfBooked.executeQuery()) {
-                        
-            // If there's no results, we return false.
-            if(results.next()) return true;
-            else return false;
 
-            
+        try (ResultSet results = checkIfBooked.executeQuery()) {
+
+            // If there's no results, we return false.
+            if (results.next()) {
+                return true;
+            } else {
+                return false;
+            }
+
         } catch (SQLException e) {
             e.printStackTrace();
             return true;
-        } 
+        }
     }
 }

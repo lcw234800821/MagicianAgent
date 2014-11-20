@@ -14,22 +14,19 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 package us.justg.gus.java.magicianagent;
 
-import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type;
-import java.awt.AWTEventMulticaster;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.sql.SQLException;
 import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
@@ -40,215 +37,264 @@ import javax.swing.JTextField;
  * @author hfs5022
  */
 public class BookTab extends JPanel {
-    
+
+    // Width of the "name" text  box.
     final int TEXT_BOX_WIDTH = 20;
-    
+
+    //-TOP----------------------------------------------------------------------
     JPanel topContainer;
-    
+
+    // Text box (and label)
     JPanel textboxContainer;
     JLabel textboxLabel;
     JTextField textbox;
-    
+
+    // Dropdown and the connector needed to populate it.
     JComboBox holidayDropdown;
     HolidayTableConnector connector;
-    
-    JButton bookButton; 
-    
+
+    // Button to create booking.
+    JButton bookButton;
+
+    // The listener that will create the booking - will be attached to both
+    //      the bookButton and the textbox.
+    AddNewBookingListener listener;
+    //-END TOP------------------------------------------------------------------
+
+    //-BOTTOM-------------------------------------------------------------------
     JPanel bottomContainer;
-    
+
+    // Console
     JScrollPane consoleScrollPane;
     BookTabConsole console;
-    
-    
+    //-END BOTTOM---------------------------------------------------------------
+
     public BookTab() {
-        
+
+        // Set layout.
         setLayout(new BorderLayout());
-        
+
+        //-TOP------------------------------------------------------------------
         topContainer = new JPanel(new FlowLayout());
-        
+
+        // Instantiate listener for button and textbox.
+        listener = new AddNewBookingListener();
+
+        // Set up textbox (with border label)
         textboxContainer = new JPanel();
         textboxContainer.setLayout(
                 new BoxLayout(textboxContainer, BoxLayout.PAGE_AXIS)
         );
         textboxLabel = new JLabel("Customer Name");
         textbox = new JTextField(TEXT_BOX_WIDTH);
+        textbox.addActionListener(listener);
         textboxContainer.add(textboxLabel);
         textboxContainer.add(textbox);
-        
-        
+
+        // Set up dropdown.
         connector = new HolidayTableConnector();
         holidayDropdown = new JComboBox(connector.getAllHolidays().toArray());
-        connector.close();        bookButton = new JButton("Book");
-        
+        connector.close();
+
+        // Set up button.
         bookButton = new JButton("Book");
-        bookButton.addActionListener(new AddNewBookingListener());
-        
+        bookButton.addActionListener(listener);
+
+        // Add everything.
         topContainer.add(textboxContainer);
         topContainer.add(holidayDropdown);
         topContainer.add(bookButton);
-        
-        
+        //-END TOP--------------------------------------------------------------
+
+        //-BOTTOM---------------------------------------------------------------
         bottomContainer = new JPanel(new BorderLayout());
         bottomContainer.setBorder(BorderFactory.createTitledBorder("Console"));
-        
+
+        // Set up console.
         console = new BookTabConsole();
         consoleScrollPane = new JScrollPane(console);
-        
-        bottomContainer.add(consoleScrollPane,BorderLayout.CENTER);
-        
-        add(topContainer,BorderLayout.NORTH);
-        add(bottomContainer,BorderLayout.CENTER);
-        
+
+        // Add console.
+        bottomContainer.add(consoleScrollPane, BorderLayout.CENTER);
+        //-END BOTTOM-----------------------------------------------------------
+
+        // Add everything to the tab.
+        add(topContainer, BorderLayout.NORTH);
+        add(bottomContainer, BorderLayout.CENTER);
+
     }
     
+    /**
+     * AddNewBookingListener handles the actual booking process on the Book tab.
+     * It is currently attached to both the textbox (called on "enter") and the
+     * "Book" button itself. It draws user input from the textbox and the drop-
+     * down to complete the booking process.
+     */
     private class AddNewBookingListener implements ActionListener {
 
         @Override
         public void actionPerformed(ActionEvent e) {
             
-            // We need to connect to all of the tables at different points.
-            BookingsTableConnector bookings = new BookingsTableConnector();
-            MagicianTableConnector magicianTableConnector = 
-                    new MagicianTableConnector();
-            CustomerTableConnector connector = new CustomerTableConnector();
-            WaitlistTableConnector waitlist = new WaitlistTableConnector();
+            // Magicians who have not yet been booked.
+            List<Magician> freeMagicians;
+                
+            // Instantiate connectors: we need to connect to all of the tables 
+            //      at different points.
+            BookingsTableConnector bookingsTableConnector = new BookingsTableConnector();
+            MagicianTableConnector magicianTableConnector = new MagicianTableConnector();
+            CustomerTableConnector customerTableConnector = new CustomerTableConnector();
+            WaitlistTableConnector waitlistTableConnector = new WaitlistTableConnector();
             
+            // Collect the needed user input (customer name, holiday to book)
             String customer = textbox.getText();
             String holiday = holidayDropdown.getSelectedItem().toString();
-            List<Magician> freeMagicians; 
             
-            
-            if(textbox.getText() == null) return;
-            if(holidayDropdown.getSelectedItem() == null) return;
-            
-            
-            
-            // Add the customer to the database
-            if(connector.addCustomer(textbox.getText())) {
-                console.info("New customer " + textbox.getText() + " added to database.");
-            } else {
-                console.info(
-                        String.format("Customer %s already in database, no need to add.", 
-                                textbox.getText())
-                );
+            // Return if there's no input.
+            if (textbox.getText() == null
+                    || holidayDropdown.getSelectedItem() == null) {
+                
+                // Log to console.
+                console.log(BookTabConsole.ERROR, "Missing user input.");
+                
+                return;
             }
-            
+           
+
+            // Add the customer to the database.
+            if (customerTableConnector.addCustomer(textbox.getText())) {
+                
+                // Log if they're new.
+                console.log(
+                        BookTabConsole.INFO,
+                        "New customer %s added to database.",
+                        textbox.getText());
+            }
+
             // Check if they already booked that holiday.
-            if(bookings.checkIfBooked(customer, holiday)) {
-                console.error(
-                        String.format(
-                                "Customer %s has already booked a magician for %s!",
-                                customer, holiday)
+            if (bookingsTableConnector.checkIfBooked(customer, holiday)) {
+                console.log(
+                        BookTabConsole.ERROR,
+                        "Customer %s has already booked a magician for %s!",
+                        customer, holiday
                 );
                 return;
             }
-            
+
             // Check if they are on the waitlist.
-            if(waitlist.checkIfOnWaitlist(customer, holiday)) {
-                console.error(
-                        String.format(
-                                "Customer %s is already on the waitlist for %s!",
-                                customer, holiday)
+            if (waitlistTableConnector.checkIfOnWaitlist(customer, holiday)) {
+                console.log(
+                        BookTabConsole.ERROR,
+                        "Customer %s is already on the waitlist for %s!",
+                        customer, holiday
                 );
                 return;
             }
             
-            
-            freeMagicians = 
-                    magicianTableConnector
-                            .getFreeMagicians(
-                                    holiday,
-                                    customer
-                            );
-            
-            // No free magicians; add to waitlist.
-            if(freeMagicians.size() < 1) {
-                
-                
-                
-                waitlist.addToWaitlist(
-                        customer,holiday
-                );
-                
-                console.info(
-                        String.format(
-                                "Put customer %s on the waitlist for holiday %s.", 
-                                customer,holiday
-                        )
-                );
-            }
-            // Else, book them.
+            // If we've made it this far, we now find the free magicians.
+            freeMagicians = magicianTableConnector.getFreeMagicians(
+                    holiday,
+                    customer
+            );
+
+            // No free magicians: add to waitlist.
+            if (freeMagicians.size() < 1) {
+
+                try {
+
+                    waitlistTableConnector.addToWaitlist(
+                            customer, holiday
+                    );
+
+                    console.log(
+                            BookTabConsole.INFO,
+                            "Put %s on the waitlist for %s.",
+                            customer, holiday
+                    );
+
+                } catch (SQLException exception) {
+                    console.log(
+                            BookTabConsole.ERROR,
+                            "Database error; failed to put customer on the waitlist.",
+                            customer, holiday
+                    );
+                }
+            } 
+
+            // Else (if there are available magicians) book them.
             else {
-                
-                
-                
-                bookings.addToBookings(
-                        customer,
-                        holiday,
-                        freeMagicians.get(0).toString()
-                );
-                
-                console.info(
-                        String.format(
-                                "Booked customer %s with magician %s for holiday %s.", 
-                                customer, freeMagicians.get(0).toString(), holiday
-                        )
-                );
-                
+
+                try {
+
+                    bookingsTableConnector.addToBookings(
+                            customer,
+                            holiday,
+                            freeMagicians.get(0).toString()
+                    );
+
+                    console.log(
+                            BookTabConsole.INFO,
+                            "Booked %s with magician %s for %s.",
+                            customer, freeMagicians.get(0).toString(), holiday
+                    );
+
+                } catch (SQLException exception) {
+                    exception.printStackTrace();
+                    console.log(
+                            BookTabConsole.ERROR,
+                            "Database error; failed to book customer.",
+                            customer, freeMagicians.get(0).toString(), holiday
+                    );
+                }
+
             }
-            
-            
-            
+
+            // Close all connections.
+            bookingsTableConnector.close();
+            magicianTableConnector.close();
+            customerTableConnector.close();
+            waitlistTableConnector.close();
+
         }
-        
+
     }
     
+    /**
+     * BookTabConsole is a simple class that acts as a logging system, giving 
+     * useful feedback to the user.
+     */
     private class BookTabConsole extends JTextArea {
+        
+        public static final String INFO = "INFO";
+        public static final String WARNING = "WARN";
+        public static final String ERROR = "ERROR";
 
         public BookTabConsole() {
             super();
-            
+
             // The console's not editable.
             setEditable(false);
-            
+
+            // Word wrapping.
             setLineWrap(true);
             setWrapStyleWord(true);
         }
         
-        public void error(String error) {
-            
-            writeLine(
-                    String.format(
-                            "[ERROR]\t%s", error
-                    )
-            );
-            
-        }
         
-        public void warning(String warning){
-            
+        // Logging with variable levels of alert.
+        public void log(String level, String format, Object... args) {
             writeLine(
                     String.format(
-                            "[WARN]\t%s", warning
-                    )
-            );
-            
-        }
-        
-        public void info(String info) {
-            
-            writeLine(
-                    String.format(
-                            "[INFO]\t%s", info
+                            "[" + level + "]\t" + format, args
                     )
             );
         }
         
-        public void writeLine(String line) {
-            String message = String.format("%s%s\n", getText(), line);
+        // Write to textbox.
+        public void writeLine(String format, Object... args) {
+            String message = String.format(getText() + format + "\n", args);
             setText(message);
         }
-        
+
     }
-    
+
 }

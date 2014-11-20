@@ -66,26 +66,17 @@ public class WaitlistTableConnector extends MagicianAgentConnector {
         
     }
     
-    public boolean addToWaitlist(String customer, String holiday) {
-                
-        try {
-            
-            addToWaitlist.setTimestamp(1, 
-                    new Timestamp(Calendar.getInstance().getTime().getTime())
-            );
-            addToWaitlist.setString(2, customer);
-            addToWaitlist.setString(3, holiday);
-            
-            addToWaitlist.executeUpdate();
-            
-            return true;
+    public void addToWaitlist(String customer, String holiday)
+            throws SQLException {
 
-            
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        } 
-        
+        addToWaitlist.setTimestamp(1,
+                new Timestamp(Calendar.getInstance().getTime().getTime())
+        );
+        addToWaitlist.setString(2, customer);
+        addToWaitlist.setString(3, holiday);
+
+        addToWaitlist.executeUpdate();
+
     }
     
     public boolean checkIfOnWaitlist(String customer, String holiday) {
