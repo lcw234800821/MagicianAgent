@@ -34,7 +34,9 @@ import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -226,6 +228,8 @@ public class StatusTab extends JPanel {
         //-BOTTOM HALF----------------------------------------------------------
         table = new JTable();
         tableScrollPane = new JScrollPane(table);
+        // Add popup menu for the table.
+        table.setComponentPopupMenu(new TablePopup());
 
         // Adding in the two halves.
         top.add(radioButtonsContainer);
@@ -347,6 +351,14 @@ public class StatusTab extends JPanel {
             fireTableStructureChanged();
         }
 
+    }
+    
+    class TablePopup extends JPopupMenu {
+
+        public TablePopup() {
+            add(new JMenuItem("Bubby"));
+        }
+        
     }
 
 }
