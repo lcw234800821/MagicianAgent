@@ -22,6 +22,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import javax.swing.BorderFactory;
@@ -38,7 +39,7 @@ import javax.swing.JTextField;
  *
  * @author hfs5022
  */
-public class BookTab extends JPanel {
+public class BookTab extends MagicianAgentTab {
 
     // Width of the "name" text  box.
     final int TEXT_BOX_WIDTH = 20;
@@ -53,7 +54,6 @@ public class BookTab extends JPanel {
 
     // Dropdown and the connector needed to populate it.
     JComboBox holidayDropdown;
-    HolidayTableConnector connector;
 
     // Button to create booking.
     JButton bookButton;
@@ -68,7 +68,7 @@ public class BookTab extends JPanel {
 
     // Console
     JScrollPane consoleScrollPane;
-    BookTabConsole console;
+    MagicianAgentConsole console;
     //-END BOTTOM---------------------------------------------------------------
 
     public BookTab() {
@@ -92,11 +92,9 @@ public class BookTab extends JPanel {
         textbox.addActionListener(listener);
         textboxContainer.add(textboxLabel);
         textboxContainer.add(textbox);
-
-        // Set up dropdown.
-        connector = new HolidayTableConnector();
-        holidayDropdown = new JComboBox(connector.getAllHolidays().toArray());
-        connector.close();
+        
+        // Set up holiday dropdown.
+        holidayDropdown = new JComboBox();
 
         // Set up button.
         bookButton = new JButton("Book");
@@ -109,21 +107,27 @@ public class BookTab extends JPanel {
         //-END TOP--------------------------------------------------------------
 
         //-BOTTOM---------------------------------------------------------------
-        bottomContainer = new JPanel(new BorderLayout());
-        bottomContainer.setBorder(BorderFactory.createTitledBorder("Console"));
-
         // Set up console.
-        console = new BookTabConsole();
-        consoleScrollPane = new JScrollPane(console);
+        console = new MagicianAgentConsole("Console");
 
-        // Add console.
-        bottomContainer.add(consoleScrollPane, BorderLayout.CENTER);
         //-END BOTTOM-----------------------------------------------------------
 
+        // Update combo boxes.
+        updateComboBoxes();
+        
         // Add everything to the tab.
         add(topContainer, BorderLayout.NORTH);
-        add(bottomContainer, BorderLayout.CENTER);
+        add(console, BorderLayout.CENTER);
 
+    }
+
+    @Override
+    public void updateComboBoxes() {
+        holidayDropdown.removeAllItems();
+        HolidayTableConnector connector = new HolidayTableConnector();
+        ArrayList<Holiday> list = (ArrayList) connector.getAllHolidays();
+        for (Holiday h : list) holidayDropdown.addItem(h);
+        connector.close();
     }
 
     /**
@@ -157,7 +161,7 @@ public class BookTab extends JPanel {
                     || holidayDropdown.getSelectedItem() == null) {
 
                 // Log to console.
-                console.log(BookTabConsole.ERROR, "Missing user input.");
+                console.log(MagicianAgentConsole.ERROR, "Missing user input.");
 
                 return;
             }
@@ -167,7 +171,7 @@ public class BookTab extends JPanel {
 
                 // Log if they're new.
                 console.log(
-                        BookTabConsole.INFO,
+                        MagicianAgentConsole.INFO,
                         "New customer %s added to database.",
                         textbox.getText());
             }
@@ -175,7 +179,7 @@ public class BookTab extends JPanel {
             // Check if they already booked that holiday.
             if (bookingsTableConnector.checkIfBooked(customerName, holidayName)) {
                 console.log(
-                        BookTabConsole.ERROR,
+                        MagicianAgentConsole.ERROR,
                         "Customer %s has already booked a magician for %s!",
                         customer, holidayName
                 );
@@ -185,7 +189,7 @@ public class BookTab extends JPanel {
             // Check if they are on the waitlist.
             if (waitlistTableConnector.checkIfOnWaitlist(customerName, holidayName)) {
                 console.log(
-                        BookTabConsole.ERROR,
+                        MagicianAgentConsole.ERROR,
                         "Customer %s is already on the waitlist for %s!",
                         customer, holidayName
                 );
@@ -216,7 +220,7 @@ public class BookTab extends JPanel {
                     waitlistTableConnector.addToWaitlist(waitlistItem);
 
                     console.log(
-                            BookTabConsole.INFO,
+                            MagicianAgentConsole.INFO,
                             "Put %s on the waitlist for %s.",
                             customerName, holidayName
                     );
@@ -226,7 +230,7 @@ public class BookTab extends JPanel {
                     exception.printStackTrace();
 
                     console.log(
-                            BookTabConsole.ERROR,
+                            MagicianAgentConsole.ERROR,
                             "Database error; failed to put customer on the waitlist.",
                             customerName, holidayName
                     );
@@ -252,7 +256,7 @@ public class BookTab extends JPanel {
                     bookingsTableConnector.addToBookings(booking);
 
                     console.log(
-                            BookTabConsole.INFO,
+                            MagicianAgentConsole.INFO,
                             "Booked %s with magician %s for %s.",
                             customerName, freeMagicians.get(0).toString(), holidayName
                     );
@@ -260,7 +264,7 @@ public class BookTab extends JPanel {
                 } catch (SQLException exception) {
                     exception.printStackTrace();
                     console.log(
-                            BookTabConsole.ERROR,
+                            MagicianAgentConsole.ERROR,
                             "Database error; failed to book customer.",
                             customerName, freeMagicians.get(0).toString(), holidayName
                     );
@@ -274,44 +278,6 @@ public class BookTab extends JPanel {
             customerTableConnector.close();
             waitlistTableConnector.close();
 
-        }
-
-    }
-
-    /**
-     * BookTabConsole is a simple class that acts as a logging system, giving
-     * useful feedback to the user.
-     */
-    private class BookTabConsole extends JTextArea {
-
-        public static final String INFO = "INFO";
-        public static final String WARNING = "WARN";
-        public static final String ERROR = "ERROR";
-
-        public BookTabConsole() {
-            super();
-
-            // The console's not editable.
-            setEditable(false);
-
-            // Word wrapping.
-            setLineWrap(true);
-            setWrapStyleWord(true);
-        }
-
-        // Logging with variable levels of alert.
-        public void log(String level, String format, Object... args) {
-            writeLine(
-                    String.format(
-                            "[" + level + "]\t" + format, args
-                    )
-            );
-        }
-
-        // Write to textbox.
-        public void writeLine(String format, Object... args) {
-            String message = String.format(getText() + format + "\n", args);
-            setText(message);
         }
 
     }

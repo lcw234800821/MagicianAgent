@@ -2,6 +2,7 @@ package us.justg.gus.java.magicianagent;
 
 import com.sun.java.swing.plaf.windows.WindowsClassicLookAndFeel;
 import com.sun.java.swing.plaf.windows.WindowsLookAndFeel;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import javax.swing.JFrame;
@@ -9,6 +10,8 @@ import javax.swing.JTabbedPane;
 import javax.swing.LookAndFeel;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 /**
  *
@@ -45,10 +48,20 @@ public class MagicianAgentGUI extends JFrame {
         jTabbedPane = new JTabbedPane();
         jTabbedPane.addTab("Book", null, new BookTab(), "Book a magician");
         jTabbedPane.addTab("Status", null, new StatusTab(), "Check the status of a holiday or magician");
+        jTabbedPane.addTab("Edit Database", null, new EditTab(), "Edit data in the database.");
+        
+        jTabbedPane.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                ((MagicianAgentTab)jTabbedPane.getSelectedComponent())
+                        .updateComboBoxes();
+            }
+        });
 
         // Finally, add components and set visible.
         add(jTabbedPane);
         setVisible(true);
         setResizable(false);
     }
+    
 }

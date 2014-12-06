@@ -31,6 +31,7 @@ public class MagicianTableConnector extends MagicianAgentConnector {
 
     PreparedStatement getAllMagicians;
     PreparedStatement getFreeMagicians;
+    PreparedStatement addMagician;
 
     public MagicianTableConnector() {
         super();
@@ -56,7 +57,12 @@ public class MagicianTableConnector extends MagicianAgentConnector {
                     + "WHERE holiday = ? "
                     + "AND name <> ?)"
             );
-
+            addMagician = connection.prepareStatement(
+                            "INSERT INTO magician "
+                            + "VALUES (?)"
+            );
+            
+            
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -107,5 +113,13 @@ public class MagicianTableConnector extends MagicianAgentConnector {
 
         return results;
 
+    }
+    
+    // Throws exception if not added - likely because magician exists.
+    public void addMagician(String name) throws SQLException {
+        
+        addMagician.setString(1, name);
+        addMagician.executeUpdate();        
+        
     }
 }

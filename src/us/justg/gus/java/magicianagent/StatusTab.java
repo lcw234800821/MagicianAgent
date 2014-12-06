@@ -46,7 +46,7 @@ import javax.swing.table.AbstractTableModel;
  *
  * @author hfs5022
  */
-public class StatusTab extends JPanel {
+public class StatusTab extends MagicianAgentTab {
 
     //-TOP----------------------------------------------------------------------
     JPanel top;
@@ -245,6 +245,11 @@ public class StatusTab extends JPanel {
         Dimension tableSize = new Dimension(getSize().width, tableScrollPane.getSize().height);
         tableScrollPane.setPreferredSize(tableSize);
         validate();
+    }
+
+    @Override
+    public void updateComboBoxes() {
+        // There's nothing we have to do here, actually.
     }
 
     class StatusTableModel extends AbstractTableModel {
