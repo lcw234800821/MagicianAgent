@@ -249,7 +249,7 @@ public class StatusTab extends MagicianAgentTab {
 
     @Override
     public void updateComboBoxes() {
-        // There's nothing we have to do here, actually.
+        dropDown.setPrototypeDisplayValue("                          ");
     }
 
     class StatusTableModel extends AbstractTableModel {

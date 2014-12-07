@@ -22,7 +22,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 
 
 /**
@@ -33,6 +35,8 @@ public class WaitlistTableConnector extends MagicianAgentConnector {
     
     PreparedStatement addToWaitlist;
     PreparedStatement checkIfOnWaitlist;
+    PreparedStatement getAllWaitlistItems;
+    PreparedStatement dropFromWaitlist;
     
     public WaitlistTableConnector() {
         super();
@@ -54,6 +58,16 @@ public class WaitlistTableConnector extends MagicianAgentConnector {
                             + "customer = ? "
                             + "AND "
                             + "holiday = ? "
+            );
+            getAllWaitlistItems = connection.prepareStatement(
+                    "SELECT * FROM waitlist "
+                            + "ORDER BY timestamp ASC"
+            );
+            dropFromWaitlist = connection.prepareStatement(
+                    "DELETE FROM waitlist "
+                            + "WHERE "
+                            + "customer = ? "
+                            + "AND holiday = ?"
             );
             
             
@@ -93,6 +107,17 @@ public class WaitlistTableConnector extends MagicianAgentConnector {
 
     }
     
+    public void addToWaitlist(Booking booking)
+            throws SQLException {
+
+        addToWaitlist.setTimestamp(1, booking.getTimestamp());
+        addToWaitlist.setString(2, booking.getCustomer().toString());
+        addToWaitlist.setString(3, booking.getHoliday().toString());
+
+        addToWaitlist.executeUpdate();
+
+    }
+    
     public boolean checkIfOnWaitlist(String customer, String holiday) {
         try {
             
@@ -114,5 +139,98 @@ public class WaitlistTableConnector extends MagicianAgentConnector {
             e.printStackTrace();
             return true;
         } 
+    }
+    
+    public List<WaitlistItem> getAllWaitlistItems() {
+    
+        List<WaitlistItem> results = null;
+
+        try (ResultSet resultSet = getAllWaitlistItems.executeQuery()) {
+
+            results = new ArrayList<>();
+
+            while (resultSet.next()) {
+                results.add(
+                        new WaitlistItem(
+                                resultSet.getObject("timestamp", Timestamp.class),
+                                new Holiday(resultSet.getString("holiday")),
+                                new Customer(resultSet.getString("customer"))
+                        )
+                );
+            }
+
+        } catch (SQLException e) {
+            //e.printStackTrace();
+            results = null;
+        }
+
+        return results;
+    }
+    
+    public void dropFromWaitlist(Customer customer, Holiday holiday) 
+            throws SQLException {
+        dropFromWaitlist(customer.toString(), holiday.toString());
+    }
+    
+    public void dropFromWaitlist(String customer, String holiday) 
+            throws SQLException {
+        
+        dropFromWaitlist.setString(1, customer);
+        dropFromWaitlist.setString(2, holiday);
+        
+        dropFromWaitlist.executeUpdate();
+    }
+    
+    /**
+     * Get all waitlist items and check if there's any open spots for them. 
+     * 
+     * @return A list of created bookings.
+     */
+    public List<Booking> resolveWaitlist() {
+        
+        // Table connectors.
+        BookingsTableConnector bookingsTableConnector = new BookingsTableConnector();
+        MagicianTableConnector magicianTableConnector = new MagicianTableConnector();
+        
+        // Our waitlist, sorted ascending.
+        ArrayList<WaitlistItem> waitlistItems = (ArrayList) getAllWaitlistItems();
+        
+        // The created bookings.
+        ArrayList<Booking> newBookings = new ArrayList<>();
+        
+        for (WaitlistItem item : waitlistItems) {
+            // Get the free magicians.
+            ArrayList<Magician> freeMagicians = 
+                    (ArrayList)magicianTableConnector
+                    .getFreeMagicians(item.getHoliday().toString(),
+                            item.getCustomer().toString());
+            
+            // If there's a free magician...
+            if(freeMagicians.size() > 0) {
+                try {
+                    // Add new booking.
+                    Booking booking = new Booking(
+                                new Timestamp(Calendar.getInstance().getTime().getTime()),
+                                item.getHoliday(),
+                                item.getCustomer(),
+                                freeMagicians.get(0)
+                        );
+                    bookingsTableConnector.addToBookings(booking);
+                    newBookings.add(booking);
+                    
+                    // Drop from waitlist.
+                    dropFromWaitlist(item.getCustomer(), item.getHoliday());
+                    
+                } catch (SQLException e) {
+                    
+                }
+            }
+            
+        }
+        
+        bookingsTableConnector.close();
+        magicianTableConnector.close();
+        
+        return newBookings;
     }
 }

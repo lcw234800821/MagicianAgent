@@ -30,6 +30,7 @@ import java.util.List;
 public class HolidayTableConnector extends MagicianAgentConnector {
 
     PreparedStatement getAllHolidays;
+    PreparedStatement addHoliday;
 
     public HolidayTableConnector() {
         super();
@@ -42,6 +43,11 @@ public class HolidayTableConnector extends MagicianAgentConnector {
             getAllHolidays = connection.prepareStatement(
                     "SELECT name "
                     + "FROM holiday"
+            /*+ "ORDER BY name ASC"*/
+            );
+            addHoliday = connection.prepareStatement(
+                    "INSERT INTO holiday "
+                    + "VALUES (?)"
             /*+ "ORDER BY name ASC"*/
             );
 
@@ -64,9 +70,18 @@ public class HolidayTableConnector extends MagicianAgentConnector {
             }
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            //e.printStackTrace();
+            results = null;
         }
 
         return results;
+    }
+    
+    public void addHoliday(String holidayName) throws SQLException {
+        
+        addHoliday.setString(1, holidayName);
+        
+        addHoliday.executeUpdate();
+        
     }
 }

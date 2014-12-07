@@ -21,15 +21,13 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
-import javax.swing.SwingUtilities;
 
 /**
  *
@@ -57,11 +55,12 @@ public class EditTab extends MagicianAgentTab {
     private JButton addHolidayButton;
     //-END ADD HOLIDAY----------------------------------------------------------
     
-    //-DROP HOLIDAY-------------------------------------------------------------
-    private JPanel dropHolidayPanel;
-    private JComboBox<Holiday> dropHolidayComboBox;
-    private JButton dropHolidayButton;
-    //-END DROP HOLIDAY---------------------------------------------------------
+    //-DROP BOOKING-------------------------------------------------------------
+    private JPanel dropBookingPanel;
+    private JComboBox<Customer> dropBookingCustomerComboBox;
+    private JComboBox<Holiday> dropBookingHolidayComboBox;
+    private JButton dropBookingButton;
+    //-END DROP BOOKING---------------------------------------------------------
     
     //-CONSOLE------------------------------------------------------------------
     private MagicianAgentConsole console;
@@ -110,6 +109,10 @@ public class EditTab extends MagicianAgentTab {
                 BorderFactory.createTitledBorder("Drop Magician")
         );
         
+        // Add listener.
+        DropMagicianListener dropMagicianListener = new DropMagicianListener();
+        dropMagicianButton.addActionListener(dropMagicianListener);
+        
         // Add everything into the panel.
         dropMagicianPanel.add(dropMagicianComboBox);
         dropMagicianPanel.add(dropMagicianButton);
@@ -125,30 +128,41 @@ public class EditTab extends MagicianAgentTab {
                 BorderFactory.createTitledBorder("Add Holiday")
         );
         
+        // Add listener.
+        AddHolidayListener addHolidayListener = new AddHolidayListener();
+        addHolidayTextField.addActionListener(addHolidayListener);
+        addHolidayButton.addActionListener(addHolidayListener);
+        
         
         // Add everything into the panel.
         addHolidayPanel.add(addHolidayTextField);
         addHolidayPanel.add(addHolidayButton);
         //-END ADD HOLIDAY----------------------------------------------------------
 
-        //-DROP HOLIDAY-------------------------------------------------------------
-        dropHolidayPanel = new JPanel(new FlowLayout());
-        dropHolidayComboBox = new JComboBox<>();
-        dropHolidayButton = new JButton("Drop");
+        //-DROP BOOKING---------------------------------------------------------
+        dropBookingPanel = new JPanel(new FlowLayout());
+        dropBookingCustomerComboBox = new JComboBox<>();
+        dropBookingHolidayComboBox = new JComboBox<>();
+        dropBookingButton = new JButton("Drop");
         
         // Set border.
-        dropHolidayPanel.setBorder(
-                BorderFactory.createTitledBorder("Drop Holiday")
+        dropBookingPanel.setBorder(
+                BorderFactory.createTitledBorder("Drop Booking")
         );
         
-        // Add everything into the panel.
-        dropHolidayPanel.add(dropHolidayComboBox);
-        dropHolidayPanel.add(dropHolidayButton);
-        //-END DROP HOLIDAY-----------------------------------------------------
+        // Add listener.
+        DropBookingListener dropBookingListener = new DropBookingListener();
+        dropBookingButton.addActionListener(dropBookingListener);
         
-        //-CONSOLE------------------------------------------------------------------
+        // Add everything into the panel.
+        dropBookingPanel.add(dropBookingCustomerComboBox);
+        dropBookingPanel.add(dropBookingHolidayComboBox);
+        dropBookingPanel.add(dropBookingButton);
+        //-END DROP BOOKING-----------------------------------------------------
+        
+        //-CONSOLE--------------------------------------------------------------
         console = new MagicianAgentConsole("Console");
-        //-END CONSOLE--------------------------------------------------------------
+        //-END CONSOLE----------------------------------------------------------
         
         // Update combo boxes.
         updateComboBoxes();
@@ -160,22 +174,32 @@ public class EditTab extends MagicianAgentTab {
         add(addMagicianPanel);
         add(dropMagicianPanel);
         add(addHolidayPanel);
-        add(dropHolidayPanel);
+        add(dropBookingPanel);
         add(console);
     }
 
     public void updateComboBoxes() {
         
-        // Drop Holiday combo box.
+        // Drop booking holiday box.
         HolidayTableConnector holidayTableConnector = 
                 new HolidayTableConnector();
-        ArrayList<Holiday> holidays = 
-                (ArrayList) holidayTableConnector.getAllHolidays();
-        dropHolidayComboBox.removeAllItems();
-        for (Holiday h : holidays) dropHolidayComboBox.addItem(h);
+        Holiday[] holidays = new Holiday[0];
+        holidays = holidayTableConnector.getAllHolidays().toArray(holidays);
+        dropBookingHolidayComboBox.removeAllItems();
+        dropBookingHolidayComboBox.setModel(new DefaultComboBoxModel<Holiday>(holidays));
+        dropBookingHolidayComboBox.setPrototypeDisplayValue(new Holiday("                                              "));
+        //for (Holiday h : holidays) dropBookingHolidayComboBox.addItem(h); 
         holidayTableConnector.close();
         
-        
+        // Drop booking customer box.
+        CustomerTableConnector customerTableConnector = 
+                new CustomerTableConnector();
+        Customer[] customers = new Customer[0];
+        customers = customerTableConnector.getAllCustomers().toArray(customers);
+        dropBookingCustomerComboBox.removeAllItems();
+        dropBookingCustomerComboBox.setModel(new DefaultComboBoxModel<Customer>(customers));
+        dropBookingCustomerComboBox.setPrototypeDisplayValue(new Customer("                           "));
+        customerTableConnector.close(); 
         
         // Drop Magician combo box.
         MagicianTableConnector magicianTableConnector = new MagicianTableConnector();
@@ -188,13 +212,15 @@ public class EditTab extends MagicianAgentTab {
         
     }
     
-  
-
     private class AddMagicianListener implements ActionListener {
 
         @Override
         public void actionPerformed(ActionEvent e) {
             
+            MagicianTableConnector magicianTableConnector = 
+                    new MagicianTableConnector();
+            WaitlistTableConnector waitlistTableConnector = 
+                    new WaitlistTableConnector();
             String magicianName = addMagicianTextField.getText();
             
             // Check that the text box isn't empty.
@@ -204,14 +230,11 @@ public class EditTab extends MagicianAgentTab {
                 return;
             }
             
-            MagicianTableConnector magicianTableConnector = 
-                    new MagicianTableConnector();
-            
             
             try {
                 magicianTableConnector.addMagician(magicianName);
                 console.log(MagicianAgentConsole.INFO,
-                        "%s added to database.", magicianName);
+                        "Magician %s added to database.", magicianName);
             } catch (SQLException ex) {
                 // It's likely that the magician exists if we get here. But how 
                 //      can we be sure that's the error?
@@ -221,11 +244,191 @@ public class EditTab extends MagicianAgentTab {
             }
             
             // Now we resolve the waitlist.
+            console.log(MagicianAgentConsole.INFO, "Resolving waitlist...");
+            ArrayList<Booking> newBookings = 
+                    (ArrayList) waitlistTableConnector.resolveWaitlist();
             
+            // Log the created bookings (if any created)
+            console.log(MagicianAgentConsole.INFO, 
+                    "%d new bookings after waitlist resolved.", newBookings.size());
+            for (Booking b : newBookings) {
+                console.log(MagicianAgentConsole.INFO, 
+                        "Booked %s with magician %s for %s.",
+                        b.getCustomer().toString(),
+                        b.getMagician().toString(),
+                        b.getHoliday().toString());
+            }
             
             
             
             // Finally, update combo boxes.
+            updateComboBoxes();
+            
+            
+            waitlistTableConnector.close();
+            magicianTableConnector.close();
+        }
+        
+    }
+    
+    private class DropMagicianListener implements ActionListener {
+
+        @Override
+        public void actionPerformed(ActionEvent ae) {
+
+            // Connectors
+            BookingsTableConnector bookingsTableConnector = 
+                    new BookingsTableConnector();
+            WaitlistTableConnector waitlistTableConnector = 
+                    new WaitlistTableConnector();
+            MagicianTableConnector magicianTableConnector =
+                    new MagicianTableConnector();
+
+            // The magician in question.
+            Magician magician = (Magician) dropMagicianComboBox.getSelectedItem();
+
+
+            // Before we can drop the magician, we have to remove all booki-
+            //      ngs dependant on that magician.
+
+            // All the bookings of that magician.
+            ArrayList<Booking> bookingsToBeDropped =
+                    (ArrayList) bookingsTableConnector
+                            .getAllBookingsForMagician(magician.toString());
+
+            // Log.
+            console.log(MagicianAgentConsole.INFO,  
+                    "Magician %s has %d bookings that will be moved to the waitlist.", 
+                    magician.toString(),bookingsToBeDropped.size());
+
+            // Now we'll loop, adding new waitlist items & removing bookings.
+            for (Booking b : bookingsToBeDropped) {
+
+                // Add to waitlist.
+                try {
+                    waitlistTableConnector.addToWaitlist(b);
+                    console.log(MagicianAgentConsole.INFO,
+                            "Customer %s moved to waitlist for %s.", 
+                            b.getCustomer().toString(),
+                            b.getHoliday().toString());
+
+                } catch (SQLException e) {
+                    console.log(MagicianAgentConsole.ERROR, 
+                            "Problem adding item to waitlist.");
+                }
+
+                // Remove booking.
+                try {
+                    bookingsTableConnector.removeBooking(b);
+                } catch (SQLException e) {
+                    console.log(MagicianAgentConsole.ERROR, 
+                            "Problem deleting booking.");
+                }
+
+            }
+
+            // Now we can drop the magician from the magician table.
+            try {
+                magicianTableConnector.dropMagician(magician.toString());
+            } catch (SQLException e) {
+                e.printStackTrace();
+                console.log(MagicianAgentConsole.ERROR, 
+                        "Could not drop magician from table.");
+            }
+
+            // Close connections.
+            bookingsTableConnector.close();
+            waitlistTableConnector.close();
+            magicianTableConnector.close();
+            
+            // Update combo boxes.
+            updateComboBoxes();
+        }
+
+    }
+    
+    private class AddHolidayListener implements ActionListener {
+
+        @Override
+        public void actionPerformed(ActionEvent ae) {
+            
+            HolidayTableConnector holidayTableConnector = 
+                    new HolidayTableConnector();
+            
+            String holidayName = addHolidayTextField.getText();
+            
+            if(holidayName == "") {
+                console.log(MagicianAgentConsole.ERROR, 
+                    "Please enter a holiday first.");
+                return;
+            }
+            
+            // Add holiday.
+            try {
+                holidayTableConnector.addHoliday(holidayName);
+            } catch (SQLException e) {
+                console.log(MagicianAgentConsole.ERROR, "Could not add holiday.");
+            }
+            
+            // Close connectors.
+            holidayTableConnector.close();
+            
+            // Update combo boxes.
+            updateComboBoxes();
+        }
+        
+    }
+    
+    private class DropBookingListener implements ActionListener {
+
+        @Override
+        public void actionPerformed(ActionEvent ae) {
+            
+            // Connectors.
+            BookingsTableConnector bookingsTableConnector =
+                    new BookingsTableConnector();
+            WaitlistTableConnector waitlistTableConnector =
+                    new WaitlistTableConnector();
+            
+            Customer customer =
+                    (Customer) dropBookingCustomerComboBox.getSelectedItem();
+            Holiday holiday = 
+                    (Holiday) dropBookingHolidayComboBox.getSelectedItem();
+            
+            if(customer == null || holiday == null) return;
+            
+            // Remove booking.
+            try {
+                int returned = bookingsTableConnector.removeBooking(customer, holiday);
+                console.log(MagicianAgentConsole.INFO, 
+                        "Removed %s booking for customer %s.",
+                        holiday.toString(),customer.toString());
+            } catch (SQLException e) {
+                console.log(MagicianAgentConsole.ERROR,
+                        "Problem dropping booking.");
+            }
+            
+            // Resolve waitlist. 
+            console.log(MagicianAgentConsole.INFO, "Resolving waitlist...");
+            ArrayList<Booking> newBookings = 
+                    (ArrayList) waitlistTableConnector.resolveWaitlist();
+            
+            // Log the created bookings (if any created)
+            console.log(MagicianAgentConsole.INFO, 
+                    "%d new bookings after waitlist resolved.", newBookings.size());
+            for (Booking b : newBookings) {
+                console.log(MagicianAgentConsole.INFO, 
+                        "Booked %s with magician %s for %s.",
+                        b.getCustomer().toString(),
+                        b.getMagician().toString(),
+                        b.getHoliday().toString());
+            }
+            
+            // Close connections.
+            waitlistTableConnector.close();
+            bookingsTableConnector.close();
+            
+            // Update combo boxes.
             updateComboBoxes();
             
         }

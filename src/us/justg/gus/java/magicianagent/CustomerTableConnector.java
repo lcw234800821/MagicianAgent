@@ -18,7 +18,10 @@ package us.justg.gus.java.magicianagent;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
@@ -27,6 +30,7 @@ import java.sql.SQLException;
 public class CustomerTableConnector extends MagicianAgentConnector {
 
     PreparedStatement addCustomer;
+    PreparedStatement getAllCustomers;
 
     public CustomerTableConnector() {
         super();
@@ -38,6 +42,9 @@ public class CustomerTableConnector extends MagicianAgentConnector {
             // Instantiate prepared statements.
             addCustomer = connection.prepareStatement(
                     "INSERT INTO customer VALUES ?"
+            );
+            getAllCustomers = connection.prepareStatement(
+                    "SELECT name FROM customer"
             );
 
         } catch (SQLException e) {
@@ -77,5 +84,25 @@ public class CustomerTableConnector extends MagicianAgentConnector {
             //e.printStackTrace();
             return false;
         }
+    }
+    
+    public List<Customer> getAllCustomers() {
+            
+        List<Customer> results = null;
+        
+        try (ResultSet resultSet = getAllCustomers.executeQuery()) {
+            
+            results = new ArrayList<>();
+
+            while (resultSet.next()) {
+                results.add(new Customer(resultSet.getString("name")));
+            }
+
+        } catch (SQLException e) {
+            //e.printStackTrace();
+            results = null;
+        }
+        
+        return results;
     }
 }

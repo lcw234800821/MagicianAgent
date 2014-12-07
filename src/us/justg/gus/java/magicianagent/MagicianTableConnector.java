@@ -32,6 +32,7 @@ public class MagicianTableConnector extends MagicianAgentConnector {
     PreparedStatement getAllMagicians;
     PreparedStatement getFreeMagicians;
     PreparedStatement addMagician;
+    PreparedStatement dropMagician;
 
     public MagicianTableConnector() {
         super();
@@ -61,6 +62,11 @@ public class MagicianTableConnector extends MagicianAgentConnector {
                             "INSERT INTO magician "
                             + "VALUES (?)"
             );
+            dropMagician = connection.prepareStatement(
+                            "DELETE FROM magician "
+                            + "WHERE name = ?"
+            );
+            
             
             
         } catch (SQLException e) {
@@ -120,6 +126,13 @@ public class MagicianTableConnector extends MagicianAgentConnector {
         
         addMagician.setString(1, name);
         addMagician.executeUpdate();        
+        
+    }
+    
+    public void dropMagician(String name) throws SQLException {
+        
+        dropMagician.setString(1, name);
+        dropMagician.executeUpdate();        
         
     }
 }

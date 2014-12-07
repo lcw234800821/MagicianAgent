@@ -21,7 +21,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 
 /**
  *
@@ -31,6 +33,8 @@ public class BookingsTableConnector extends MagicianAgentConnector {
 
     PreparedStatement addToBookings;
     PreparedStatement checkIfBooked;
+    PreparedStatement getAllBookingsForMagician;
+    PreparedStatement removeBooking;
 
     public BookingsTableConnector() {
         super();
@@ -52,6 +56,17 @@ public class BookingsTableConnector extends MagicianAgentConnector {
                     + "customer = ? "
                     + "AND "
                     + "holiday = ? "
+            );
+            getAllBookingsForMagician = connection.prepareStatement(
+                    "SELECT * FROM bookings "
+                    + "WHERE "
+                    + "magician = ? "
+            );
+            removeBooking = connection.prepareStatement(
+                    "DELETE FROM bookings "
+                    + "WHERE "
+                    + "customer = ? "
+                    + "AND holiday = ? "
             );
 
         } catch (SQLException e) {
@@ -113,4 +128,61 @@ public class BookingsTableConnector extends MagicianAgentConnector {
             return true;
         }
     }
+    
+    public List<Booking> getAllBookingsForMagician(String magician) {
+        
+        ArrayList<Booking> results = null;
+        
+        try {
+            getAllBookingsForMagician.setString(1, magician);
+        } catch (SQLException e) {
+             e.printStackTrace();
+        }
+
+        try (ResultSet resultSet = getAllBookingsForMagician.executeQuery()) {
+
+            results = new ArrayList<Booking>();
+            
+            while (resultSet.next()) {
+                
+                Booking b = new Booking(
+                        resultSet.getObject("timestamp", Timestamp.class),
+                        new Holiday(resultSet.getString("holiday")),
+                        new Customer(resultSet.getString("customer")),
+                        new Magician(resultSet.getString("magician"))
+                );
+                
+                results.add(b);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        
+        return results;
+    }
+    
+    public int removeBooking(Booking booking) throws SQLException{
+            
+        // Realized we don't need timestamp or magician for this.
+        //removeBooking.setTimestamp(1, booking.getTimestamp());
+        removeBooking.setString(1, booking.getCustomer().toString());
+        removeBooking.setString(2, booking.getHoliday().toString());
+        //removeBooking.setString(4, booking.getMagician().toString());
+
+        return removeBooking.executeUpdate();
+    }
+    
+    public int  removeBooking(Customer customer, Holiday holiday) throws SQLException{
+            
+        // Realized we don't need timestamp or magician for this.
+        //removeBooking.setTimestamp(1, booking.getTimestamp());
+        removeBooking.setString(1, customer.toString());
+        removeBooking.setString(2, holiday.toString());
+        //removeBooking.setString(4, booking.getMagician().toString());
+
+        return removeBooking.executeUpdate();
+    }
+    
+    
 }
