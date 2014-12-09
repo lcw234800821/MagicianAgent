@@ -140,6 +140,14 @@ public class BookTab extends MagicianAgentTab {
 
         @Override
         public void actionPerformed(ActionEvent e) {
+            
+            // Check for valid input.
+            if (holidayDropdown.getSelectedItem() == null ||
+                    textbox.getText().equals("")) {
+                console.log(MagicianAgentConsole.ERROR,
+                        "You are missing some required information. Please enter a customer name and select a magician from the dropdown.");
+                return;
+            }
 
             // Magicians who have not yet been booked.
             List<Magician> freeMagicians;

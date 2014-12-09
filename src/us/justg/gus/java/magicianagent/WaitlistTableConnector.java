@@ -141,6 +141,11 @@ public class WaitlistTableConnector extends MagicianAgentConnector {
         } 
     }
     
+    public boolean checkIfOnWaitlist(Customer customer, Holiday holiday) {
+        return checkIfOnWaitlist(customer.toString(), holiday.toString());
+    }
+    
+    
     public List<WaitlistItem> getAllWaitlistItems() {
     
         List<WaitlistItem> results = null;
@@ -210,7 +215,8 @@ public class WaitlistTableConnector extends MagicianAgentConnector {
                 try {
                     // Add new booking.
                     Booking booking = new Booking(
-                                new Timestamp(Calendar.getInstance().getTime().getTime()),
+                                /*new Timestamp(Calendar.getInstance().getTime().getTime()),*/
+                                item.getTimestamp(),
                                 item.getHoliday(),
                                 item.getCustomer(),
                                 freeMagicians.get(0)

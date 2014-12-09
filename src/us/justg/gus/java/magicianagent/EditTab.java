@@ -224,7 +224,7 @@ public class EditTab extends MagicianAgentTab {
             String magicianName = addMagicianTextField.getText();
             
             // Check that the text box isn't empty.
-            if (magicianName == "") {
+            if (magicianName.equals("")) {
                 console.log(MagicianAgentConsole.ERROR,
                         "Please enter a magician's name first.");
                 return;
@@ -286,6 +286,12 @@ public class EditTab extends MagicianAgentTab {
 
             // The magician in question.
             Magician magician = (Magician) dropMagicianComboBox.getSelectedItem();
+            
+            // Check for valid input.
+            if (magician == null) {
+                console.log(MagicianAgentConsole.ERROR, "Please select a magician from the dropdown.");
+                return;
+            }
 
 
             // Before we can drop the magician, we have to remove all booki-
@@ -357,7 +363,7 @@ public class EditTab extends MagicianAgentTab {
             
             String holidayName = addHolidayTextField.getText();
             
-            if(holidayName == "") {
+            if(holidayName.equals("")) {
                 console.log(MagicianAgentConsole.ERROR, 
                     "Please enter a holiday first.");
                 return;
@@ -395,35 +401,50 @@ public class EditTab extends MagicianAgentTab {
             Holiday holiday = 
                     (Holiday) dropBookingHolidayComboBox.getSelectedItem();
             
+            // Check for valid data.
             if(customer == null || holiday == null) return;
             
-            // Remove booking.
-            try {
-                int returned = bookingsTableConnector.removeBooking(customer, holiday);
+            // First we check if it's on the waitlist.
+            if (waitlistTableConnector.checkIfOnWaitlist(customer, holiday)) {
+                try {
+                    waitlistTableConnector.dropFromWaitlist(customer, holiday);
+                    console.log(MagicianAgentConsole.INFO, "Dropped customer %s from waitlist for holiday %s.", customer.toString(), holiday.toString());
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            } else { // Else, we have to remove a booking.
+                
+                // Remove booking.
+                try {
+                    int returned = bookingsTableConnector.removeBooking(customer, holiday);
+                    // If we actually removed something...
+                    if (returned > 0) console.log(MagicianAgentConsole.INFO, 
+                            "Removed %s booking for customer %s.",
+                            holiday.toString(),customer.toString());
+                    else console.log(MagicianAgentConsole.INFO, 
+                            "Customer not on waitlist or bookings list for that holiday.");                    
+                } catch (SQLException e) {
+                    console.log(MagicianAgentConsole.ERROR,
+                            "Problem dropping booking.");
+                }
+
+                // Resolve waitlist. 
+                console.log(MagicianAgentConsole.INFO, "Resolving waitlist...");
+                ArrayList<Booking> newBookings = 
+                        (ArrayList) waitlistTableConnector.resolveWaitlist();
+
+                // Log the created bookings (if any created)
                 console.log(MagicianAgentConsole.INFO, 
-                        "Removed %s booking for customer %s.",
-                        holiday.toString(),customer.toString());
-            } catch (SQLException e) {
-                console.log(MagicianAgentConsole.ERROR,
-                        "Problem dropping booking.");
-            }
-            
-            // Resolve waitlist. 
-            console.log(MagicianAgentConsole.INFO, "Resolving waitlist...");
-            ArrayList<Booking> newBookings = 
-                    (ArrayList) waitlistTableConnector.resolveWaitlist();
-            
-            // Log the created bookings (if any created)
-            console.log(MagicianAgentConsole.INFO, 
-                    "%d new bookings after waitlist resolved.", newBookings.size());
-            for (Booking b : newBookings) {
-                console.log(MagicianAgentConsole.INFO, 
-                        "Booked %s with magician %s for %s.",
-                        b.getCustomer().toString(),
-                        b.getMagician().toString(),
-                        b.getHoliday().toString());
-            }
-            
+                        "%d new bookings after waitlist resolved.", newBookings.size());
+                for (Booking b : newBookings) {
+                    console.log(MagicianAgentConsole.INFO, 
+                            "Booked %s with magician %s for %s.",
+                            b.getCustomer().toString(),
+                            b.getMagician().toString(),
+                            b.getHoliday().toString());
+                }
+            } // End else 
+                
             // Close connections.
             waitlistTableConnector.close();
             bookingsTableConnector.close();
